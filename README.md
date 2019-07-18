@@ -43,11 +43,11 @@ Summary of the features/capabilities/actions:
   - **add_user**                  Add user
 
 **Misc:**
-  - **invalidate_certificates**   Invalidate device certificates.")
-  - **validate_certificates**     Validate device certificates.")
-  - **push_to_controllers**       Push configuration to controllers.")
-  - **detach_devices**            Detach device templates.")
-  - **deactivate_policies**       Deactivate policies.")
+  - **invalidate_certificates**   Invalidate device certificates
+  - **validate_certificates**     Validate device certificates
+  - **push_to_controllers**       Push configuration to controllers
+  - **detach_devices**            Detach device templates
+  - **deactivate_policies**       Deactivate policies
 
 ---
 
