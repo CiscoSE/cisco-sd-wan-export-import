@@ -22,17 +22,26 @@ Command line tool for Cisco SD-WAN vManage configuration management.
 Example: python sd-wan-exim.py <vManage> <username> <password> <action>
 
 Actions:
-  export               Export entire configuration.
+  export                      Export entire configuration.
 
-  configure            Import entire configuration.
-  configure_policies   Import policies, definitions and lists.
-  configure_templates  Import feature templates and device templates.
+  configure                   Import entire configuration.
+  configure_policies          Import policies, definitions and lists.
+  configure_templates         Import feature templates and device templates.
 
-  clean                Delete template(all) and policy(all) configuration.
-  clean_policies       Delete (only) policies, definitions and lists.
-  clean_templates      Delete (only) device and feature templates.
+  clean                       Delete template(all) and policy(all) configuration.
+  clean_policies              Delete (only) policies, definitions and lists.
+  clean_templates             Delete (only) device and feature templates.
 
-  clean_devices        Delete certificates and system devices.
+  clean_devices               Delete certificates and system devices.
+
+  - password**                Update user password
+  - add_user**                Add user
+
+  - invalidate_certificates   Invalidate device certificates
+  - validate_certificates     Validate device certificates
+  - push_to_controllers       Push configuration to controllers
+  - detach_devices            Detach device templates
+  - deactivate_policies       Deactivate policies
 
 """
 
