@@ -10,39 +10,32 @@ Cisco SD-WAN powered by Viptela is a cloud-delivered overlay WAN architecture fo
 Cisco SD-WAN. A simple example of the plus value is the time saved migrating templates and policies from lab to production (from one controller to another), while preserving the exact same configurations without any manual misconfigurations.
 
 
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine.
 
 See Install and Setup for further instructions.
 
+
+
 ## Features
 
 Summary of the features/capabilities/actions:
-
-**Export:**
   - **export**             Export entire configuration.
-
-**Import:**
-- **configure**            Import entire configuration.
-    - **For Templates and Polices dependencies to be preserved use this option (configure)**
-- **configure_policies**   Import policies, definitions and lists.
-- **configure_templates**  Import feature templates and device templates.
-    - **Templates will be imported but dependencies to policies will not be imported**
-
-**Clean:**
+  - **configure**            Import entire configuration.
+      - **For Templates and Polices dependencies to be preserved use this option (configure)**
+  - **configure_policies**   Import policies, definitions and lists.
+  - **configure_templates**  Import feature templates and device templates.
+      - **Templates will be imported but dependencies to policies will not be imported**
   - **clean**                Delete template(all) and policy(all) configuration.
       - **For an accurate deploy of a configuration a clean up is required**
   - **clean_devices**        Delete certificates and system devices.
   - **clean_policies**       Delete (only) policies, definitions and lists.
   - **clean_templates**      Delete (only) device and feature templates.
       - **Devices should be manually detached before cleanup**
-
-**Users:**
   - **password**                  Update user password
   - **add_user**                  Add user
-
-**Misc:**
   - **invalidate_certificates**   Invalidate device certificates
   - **validate_certificates**     Validate device certificates
   - **push_to_controllers**       Push configuration to controllers
@@ -84,6 +77,8 @@ python sd-wan-exim.py <vManage> <username> <password> configure
 
 **NOTE:** When importing/configuring please have the configuration archive named config_archive.tar.gz(or the one used as parameter) in the same folder
 
+
+
 ## Technologies & Frameworks Used
 
 This is Cisco Sample Code!
@@ -101,6 +96,8 @@ This is Cisco Sample Code!
 
 - None
 
+
+
 ## Requirements
 
 To use this application, you will need:
@@ -108,6 +105,8 @@ To use this application, you will need:
 * **Python 3.6+** (DO NOT USE PYTHON 2)
 * **Cisco SD-WAN 18+**
 * A **vManage Cisco SD-WAN account** with read or read/write depending on the action
+
+
 
 ## Installation
 
@@ -132,6 +131,8 @@ pip install -r requirements.txt
  - Credentials (Username and Password)
 
 4. GO to next sections (Help and Usage)
+
+
 
 ## Help
 
@@ -185,14 +186,14 @@ Actions:
 
   clean_devices               Delete certificates and system devices.
 
-  - password**                Update user password
-  - add_user**                Add user
+  password                    Update user password
+  add_user                    Add user
 
-  - invalidate_certificates   Invalidate device certificates
-  - validate_certificates     Validate device certificates
-  - push_to_controllers       Push configuration to controllers
-  - detach_devices            Detach device templates
-  - deactivate_policies       Deactivate policies
+  invalidate_certificates     Invalidate device certificates
+  validate_certificates       Validate device certificates
+  push_to_controllers         Push configuration to controllers
+  detach_devices              Detach device templates
+  deactivate_policies         Deactivate policies
 
 positional arguments:
   vManage               vManage IP address or DNS name
@@ -206,6 +207,8 @@ optional arguments:
   -tenant TENANT, --tenant TENANT
                         Specify tenant in multi-tenant setup
 ```
+
+
 
 ## Usage
 
@@ -234,11 +237,14 @@ python sd-wan-exim.py myvmanage.cisco.com myusername mypassword configure mysdwa
 ```
 
 
+
 ## ToDo's:
 
 - [x] Add option to specify archive name as parameter
 - [x] Add option to detach devices before cleanup
 - [ ] Extend partial policy import capabilities
+
+
 
 ## Authors & Maintainers
 
@@ -246,10 +252,14 @@ People responsible for the creation and maintenance of this project:
 
 - Octavian Preda <opreda@cisco.com> - for any questions or issues
 
+
+
 ## Credits
 
 * Getting Started with Cisco SD-WAN REST APIs
 - `git clone https://github.com/ai-devnet/Getting-started-with-Cisco-SD-WAN-REST-APIs.git`
+
+
 
 ## License
 
