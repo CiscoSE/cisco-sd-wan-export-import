@@ -34,23 +34,21 @@ Actions:
 
   clean_devices               Delete certificates and system devices.
 
-  - password**                Update user password
-  - add_user**                Add user
+  password                    Update user password
+  add_user                    Add user
 
-  - invalidate_certificates   Invalidate device certificates
-  - validate_certificates     Validate device certificates
-  - push_to_controllers       Push configuration to controllers
-  - detach_devices            Detach device templates
-  - deactivate_policies       Deactivate policies
+  invalidate_certificates     Invalidate device certificates
+  validate_certificates       Validate device certificates
+  push_to_controllers         Push configuration to controllers
+  detach_devices              Detach device templates
+  deactivate_policies         Deactivate policies
 
 """
 
-__author__ = "Octavian Preda"
-__email__ = "opreda@cisco.com"
-__version__ = "1.3.0"
-__copyright__ = "Copyright (c) 2019 Cisco and/or its affiliates."
-__license__ = "Cisco Sample Code License, Version 1.1"
-__status__ = "Development"
+from __future__ import print_function
+from pprint import pprint
+from collections import OrderedDict
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import requests
 import sys
@@ -62,10 +60,15 @@ import os
 import shutil
 import time
 import urllib.parse
-from pprint import pprint
-from collections import OrderedDict
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+__author__ = "Octavian Preda"
+__email__ = "opreda@cisco.com"
+__version__ = "1.4.0"
+__copyright__ = "Copyright (c) 2019 Cisco and/or its affiliates."
+__license__ = "Cisco Sample Code License, Version 1.1"
+__status__ = "Development"
 
 
 """ GLOBAL VARIABLES """
@@ -138,7 +141,8 @@ class rest_api_lib:
         dup_policy_msg = "Duplicate policy detected with name"
         dup_vedge_msg = "vEdge policy with name"
         dup_vsmart_msg = "vSmart policy with name"
-        unknown_error_msg = "Unknown error"
+        dup_token = "Umbrella Token entry already exists"
+        version_msg = "Failed to create definition"
 
         payload = json.dumps(payload)
 
@@ -147,25 +151,26 @@ class rest_api_lib:
 
         response = self.session[self.vmanage_ip].post(url=url, data=payload, headers=headers, verify=False)
         if response.status_code != 200:
-            if (response.status_code == 400 and str(response.json()['error']['details']).startswith(dup_template_msg)):
-                return(response.json()['error']['details'])
-            elif (response.status_code == 400 and response.json()['error']['details'] == dup_list_msg):
-                return(response.json()['error']['details'])
-            elif (response.status_code == 400 and str(response.json()['error']['details']).startswith(dup_policy_msg)):
-                return(response.json()['error']['details'])
-            elif (response.status_code == 400 and str(response.json()['error']['details']).startswith(dup_vedge_msg)):
-                return(response.json()['error']['details'])
-            elif (response.status_code == 400 and str(response.json()['error']['details']).startswith(dup_vsmart_msg)):
-                return(response.json()['error']['details'])
-            elif (response.status_code == 400 and str(response.json()['error']['details']).startswith(unknown_error_msg)):
-                return(response.json()['error']['details'])
-            else:
-                print(response)
-                raise CiscoException("Fail - Post")
+            if (response.status_code == 400):
+                response_details = str(response.json()['error']['details'])
+                if  (response_details.startswith(dup_template_msg)) or \
+                    (response_details.startswith(dup_list_msg)) or \
+                    (response_details.startswith(dup_policy_msg)) or \
+                    (response_details.startswith(dup_vedge_msg)) or \
+                    (response_details.startswith(dup_vsmart_msg)) or \
+                    (response_details.startswith(dup_token)) or \
+                    (response_details.startswith(version_msg)):
+                    return response_details
+                else:
+                    try:
+                        print(response_details)
+                    except:
+                        print(response)
+                    raise CiscoException("Fail - Post")
         try:
             data = response.json()
         except ValueError:
-            data = "Post Request Successful"
+            data = "Successful"
 
         return data
 
@@ -185,7 +190,7 @@ class rest_api_lib:
         try:
             data = response.json()
         except ValueError:
-            data = "Put Request Successful"
+            data = "Successful"
 
         return data
 
@@ -277,7 +282,8 @@ def export_generic_item(file_path, generic_item, mount_point):
         print("Exporting ID: {}".format(id))
         new_mount_point = str(mount_point) + "/" + str(id)
         device_data = json.loads(sdwanp.get_request(new_mount_point))
-        export_data["configuration"].append(device_data)
+        if device_data:
+            export_data["configuration"].append(device_data)
 
     with open(json_file, 'w') as f:
         json.dump(export_data, f)
@@ -295,7 +301,8 @@ def export_generic_policy_ids(file_path, generic_item, mount_point):
     export_data = OrderedDict({"configuration": []})
 
     device_data = json.loads(sdwanp.get_request(mount_point))
-    export_data["configuration"] = device_data
+    if device_data:
+        export_data["configuration"] = device_data
 
     with open(json_file, 'w') as f:
         json.dump(export_data, f)
@@ -312,34 +319,40 @@ def export_policy_definitions(file_path):
 
     policy_definition_ids_list = OrderedDict({})
 
-    definiton_mount_points =    [
-                                "/cflowd",
-                                "/control",
-                                "/vedgeroute",
-                                "/hubandspoke",
-                                "/acl",
-                                "/vpnmembershipgroup",
-                                "/approute",
-                                "/zonebasedfw",
-                                "/qosmap",
-                                "/aclv6",
-                                "/mesh",
-                                "/data",
-                                "/rewriterule"
+    definition_mount_points =    [
+        "/cflowd",
+        "/dnssecurity",
+        "/advancedMalwareProtection",
+        "/control",
+        "/intrusionprevention",
+        "/vedgeroute",
+        "/hubandspoke",
+        "/acl",
+        "/vpnmembershipgroup",
+        "/approute",
+        "/approute",
+        "/zonebasedfw",
+        "/urlfiltering",
+        "/qosmap",
+        "/aclv6",
+        "/mesh",
+        "/data",
+        "/rewriterule"
                                 ]
-    for mount_point in definiton_mount_points:
+    for mount_point in definition_mount_points:
         policy_definition_ids_list[mount_point] = get_policy_definition_ids(mount_point)
     #pprint(policy_definition_ids_list)
 
     policy_definitions = OrderedDict({"configuration": OrderedDict()})
 
-    for mount_point in definiton_mount_points:
+    for mount_point in definition_mount_points:
         device_data_list = []
         for id in policy_definition_ids_list[mount_point]:
             print("Exporting ID: {}".format(id))
             new_mount_point = "template/policy/definition" + str(mount_point) + "/" + str(id)
             device_data = json.loads(sdwanp.get_request(new_mount_point))
-            device_data_list.append(device_data)
+            if device_data:
+                device_data_list.append(device_data)
         policy_definitions["configuration"][mount_point] = device_data_list
 
     with open(policy_definition_json_file, 'w') as f:
@@ -357,22 +370,32 @@ def export_policy_lists(file_path):
 
     policy_list_ids_list = OrderedDict({})
 
+
     list_mount_points =    [
-                                "/community",
-                                "/tloc",
-                                "/aspath",
-                                "/zone",
-                                "/color",
-                                "/sla",
-                                "/app",
-                                "/mirror",
-                                "/dataprefix",
-                                "/extcommunity",
-                                "/site",
-                                "/prefix",
-                                "/class",
-                                "/policer",
-                                "/vpn"
+      "/community",
+      "/localdomain",
+      "/dataipv6prefix",
+      "/ipv6prefix",
+      "/tloc",
+      "/aspath",
+      "/zone",
+      "/color",
+      "/sla",
+      "/localapp",
+      "/app",
+      "/mirror",
+      "/dataprefix",
+      "/extcommunity",
+      "/site",
+      "/prefix",
+      "/umbrelladata",
+      "/class",
+      "/ipssignature",
+#      "/dataprefixall",
+      "/urlblacklist",
+      "/policer",
+      "/urlwhitelist",
+      "/vpn"
                             ]
     for mount_point in list_mount_points:
         policy_list_ids_list[mount_point] = get_policy_list_ids(mount_point)
@@ -386,7 +409,8 @@ def export_policy_lists(file_path):
             print("Exporting ID: {}".format(id))
             new_mount_point = "template/policy/list" + str(mount_point) + "/" + str(id)
             device_data = json.loads(sdwanp.get_request(new_mount_point))
-            device_data_list.append(device_data)
+            if device_data:
+                device_data_list.append(device_data)
         policy_lists["configuration"][mount_point] = device_data_list
 
     with open(policy_list_json_file, 'w') as f:
@@ -401,7 +425,7 @@ def delete_generic_item(generic_item):
     if (generic_item == "system_device"):
         mount_point = "system/device"
     for id in ids_list:
-        print("Deleting ID: {}... ".format(id)),
+        print("Deleting ID: {} - ".format(id), end="")
         id = urllib.parse.quote(id, safe='')
         new_mount_point = str(mount_point) + "/" + str(id)
 
@@ -412,25 +436,30 @@ def delete_generic_item(generic_item):
 def delete_policy_definitions():
     print("policy_definition")
 
-    definiton_mount_points =    [
-                                "/cflowd",
-                                "/control",
-                                "/vedgeroute",
-                                "/hubandspoke",
-                                "/acl",
-                                "/vpnmembershipgroup",
-                                "/approute",
-                                "/zonebasedfw",
-                                "/qosmap",
-                                "/aclv6",
-                                "/mesh",
-                                "/data",
-                                "/rewriterule"
+    definition_mount_points =    [
+        "/cflowd",
+        "/dnssecurity",
+        "/advancedMalwareProtection",
+        "/control",
+        "/intrusionprevention",
+        "/vedgeroute",
+        "/hubandspoke",
+        "/acl",
+        "/vpnmembershipgroup",
+        "/approute",
+        "/approute",
+        "/zonebasedfw",
+        "/urlfiltering",
+        "/qosmap",
+        "/aclv6",
+        "/mesh",
+        "/data",
+        "/rewriterule"
                                 ]
-    for mount_point in definiton_mount_points:
+    for mount_point in definition_mount_points:
         policy_definition_ids_list = get_policy_definition_ids(mount_point)
         for id in policy_definition_ids_list:
-            print("Deleting ID: {}... ".format(id)),
+            print("Deleting ID: {} - ".format(id), end="")
             new_mount_point = "template/policy/definition" + str(mount_point)+ "/" + str(id)
             response = sdwanp.delete_request(new_mount_point)
             print(response)
@@ -440,26 +469,35 @@ def delete_policy_lists():
     print("policy_list")
 
     list_mount_points =    [
-                                "/community",
-                                "/tloc",
-                                "/aspath",
-                                "/zone",
-                                "/color",
-                                "/sla",
-                                "/app",
-                                "/mirror",
-                                "/dataprefix",
-                                "/extcommunity",
-                                "/site",
-                                "/prefix",
-                                "/class",
-                                "/policer",
-                                "/vpn"
+      "/community",
+      "/localdomain",
+      "/dataipv6prefix",
+      "/ipv6prefix",
+      "/tloc",
+      "/aspath",
+      "/zone",
+      "/color",
+      "/sla",
+      "/localapp",
+      "/app",
+      "/mirror",
+      "/dataprefix",
+      "/extcommunity",
+      "/site",
+      "/prefix",
+      "/umbrelladata",
+      "/class",
+      "/ipssignature",
+#      "/dataprefixall",
+      "/urlblacklist",
+      "/policer",
+      "/urlwhitelist",
+      "/vpn"
                             ]
     for mount_point in list_mount_points:
         policy_list_ids_list = get_policy_list_ids(mount_point)
         for id in policy_list_ids_list:
-            print("Deleting ID: {}... ".format(id)),
+            print("Deleting ID: {} - ".format(id), end="")
             new_mount_point = "template/policy/list" + str(mount_point)+ "/" + str(id)
             response = sdwanp.delete_request(new_mount_point)
             print(response)
@@ -618,53 +656,6 @@ def deactivate_policies():
     deactivate_generic_policy("template/policy/vsmart")
     #deactivate_generic_policy("template/policy/security")
 
-def attach_vsmart():
-    """Attach vsmart templates.
-
-        ONLY FOR POV CERT PODS!!!
-        Example command:
-
-             ./sd-wan-exim.py attach_vsmart
-
-    """
-
-    print("attach_vsmart")
-
-    mount_point = "template/device"
-    response = json.loads(sdwanp.get_request(mount_point))
-    device_data = response["data"]
-
-    for device in device_data:
-        if device["deviceType"] == "vsmart":
-            template_id = device["templateId"]
-
-    mount_point = "system/device/controllers"
-    response = json.loads(sdwanp.get_request(mount_point))
-    device_data = response['data']
-
-    for device in device_data:
-        if device["deviceType"] == "vsmart":
-            new_mount_point = "template/device/config/attachfeature"
-            item = {"deviceTemplateList":[
-                        {   "templateId": template_id,
-                            "device":[  {"csv-status":"complete",
-                                        "csv-deviceId": device["uuid"],
-                                        "csv-deviceIP": device["deviceIP"],
-                                        "csv-host-name": device["host-name"],
-                                        "//system/host-name": device["host-name"],
-                                        "//system/system-ip": device["local-system-ip"],
-                                        "//system/site-id": device["site-id"],
-                                        "csv-templateId": template_id
-                                        }],
-                            "isEdited": False,
-                            "isMasterEdited": False
-                        }
-                    ]}
-            response = sdwanp.post_request(new_mount_point, item)
-            print("Attached template:{} to vSmart {} - {}".format(template_id, device["host-name"], response))
-
-    wait(2)
-
 def check_attached_devices():
     print("check_attached_devices")
 
@@ -694,15 +685,17 @@ def import_feature_templates(file_path):
 
     for item in feature_template_data:
 
-        #print(item["templateDefinition"]["vrrp"])
-        #try:
-        #    item["templateDefinition"]["vrrp"] = {}
-        #except:
-        #    pass
+        '''
+        if "templateDefinition" in item:
+            if "vrrp" in item["templateDefinition"]:
+                print("ATTENTION: VRRP SKIPPED - Featute Template imported and VRRP set to Empty")
+                item["templateDefinition"]["vrrp"] = {}
+        '''
 
         mount_point = "template/feature/"
+        print("Feature template: Importing {0} - ".format(item["templateName"]), end="")
         response = sdwanp.post_request(mount_point, item)
-        print("Feature template: {0} - {1}".format(item["templateName"], response))
+        print("Done, {0}".format(response))
 
     """ Update Feature IDs """
     feature_template_id_old = OrderedDict()
@@ -756,6 +749,21 @@ def import_device_templates(file_path, all_template_ids, all_policy_ids = ([],[]
                 else:
                     item["policyId"] = ""
 
+                """ Update security policy IDs """
+                if "securityPolicyId" in item:
+                    if item["securityPolicyId"] in ve_t_old:
+                        old_aux = ve_t_old[item["securityPolicyId"]]
+                        new_aux = ve_t_new[old_aux]
+                        item["securityPolicyId"] = new_aux
+                    elif item["securityPolicyId"] in vs_t_old:
+                        old_aux = vs_t_old[item["securityPolicyId"]]
+                        new_aux = vs_t_new[old_aux]
+                        item["securityPolicyId"] = new_aux
+                    else:
+                        item["securityPolicyId"] = ""
+                else:
+                    item["securityPolicyId"] = ""
+
                 """ Update generalTemplates IDs """
                 if "generalTemplates" in item:
                     for i in range(0, len(item["generalTemplates"])):
@@ -780,8 +788,9 @@ def import_device_templates(file_path, all_template_ids, all_policy_ids = ([],[]
                                         new_aux = f_t_new[old_aux]
                                         item["generalTemplates"][i]["subTemplates"][j]["subTemplates"][k]["templateId"] = new_aux
 
+                print("Device template: Importing {0} - ".format(item["templateName"]), end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("Device template: {0} - {1}".format(item["templateName"], response))
+                print("Done, {0}".format(response))
             elif item["configType"] == "file":
                 try:
                     del item["templateId"]
@@ -794,8 +803,9 @@ def import_device_templates(file_path, all_template_ids, all_policy_ids = ([],[]
                 except:
                     pass
                 mount_point = "template/device/cli"
+                print("Device template: Importing {0} - ".format(item["templateName"]), end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("Device template: {0} - {1}".format(item["templateName"], response))
+                print("Done, {0}".format(response))
             else:
                 print("Device template: {0} is not a template, acutal configType is {1}".format(item["templateName"], item["configType"]))
     print("")
@@ -813,27 +823,37 @@ def import_policy_lists(file_path):
         mount_point = "template/policy/list" + str(list)
         #print(mount_point)
         for item in policy_list_data[list]:
+            print("Policy list: Importing {0} {1} - ".format(list, item["name"]), end="")
             response = sdwanp.post_request(mount_point, item)
-            print("Policy list {0} - {1}".format(item["name"], response))
+            print("Done, {0}".format(response))
     print("")
 
 
     list_mount_points =    [
-                                "/community",
-                                "/tloc",
-                                "/aspath",
-                                "/zone",
-                                "/color",
-                                "/sla",
-                                "/app",
-                                "/mirror",
-                                "/dataprefix",
-                                "/extcommunity",
-                                "/site",
-                                "/prefix",
-                                "/class",
-                                "/policer",
-                                "/vpn"
+      "/community",
+      "/localdomain",
+      "/dataipv6prefix",
+      "/ipv6prefix",
+      "/tloc",
+      "/aspath",
+      "/zone",
+      "/color",
+      "/sla",
+      "/localapp",
+      "/app",
+      "/mirror",
+      "/dataprefix",
+      "/extcommunity",
+      "/site",
+      "/prefix",
+      "/umbrelladata",
+      "/class",
+      "/ipssignature",
+#      "/dataprefixall",
+      "/urlblacklist",
+      "/policer",
+      "/urlwhitelist",
+      "/vpn"
                             ]
 
 
@@ -871,8 +891,19 @@ def import_policy_definitions(file_path, all_list_ids):
         for item in policy_definition_data[definition]:
             if definition == "/cflowd":
                 pass
-            if definition == "/control":
-                #" Update Control Id - Standard"
+                #"Cflowd ID - Standard"
+                '''
+                if "references" in item:
+                    for i in range(0, len(item["references"])):
+                        if "id" in item["references"][i]:
+                            ref_id = item["references"][i]["id"]
+                            old_aux_list = policy_list_id_old[ref_id]
+                            new_aux_list = policy_list_id_new[old_aux_list]
+                            item["references"][i]["id"] = new_aux_list
+                '''
+
+            elif definition == "/control":
+                #"Control ID - Standard"
                 if "sequences" in item:
                     for i in range(0, len(item["sequences"])):
                         if "match" in item["sequences"][i]:
@@ -886,15 +917,20 @@ def import_policy_definitions(file_path, all_list_ids):
                         if "actions" in item["sequences"][i]:
                                 for j in range (0, len(item["sequences"][i]["actions"])):
                                     if "parameter" in item["sequences"][i]["actions"][j]:
-                                        for k in range (0, len(item["sequences"][i]["actions"][j]["parameter"])):
-                                            if "ref" in item["sequences"][i]["actions"][j]["parameter"][k]:
-                                                ref_id = item["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                        if isinstance(item["sequences"][i]["actions"][j]["parameter"], list):
+                                            for k in range (0, len(item["sequences"][i]["actions"][j]["parameter"])):
+                                                if "ref" in item["sequences"][i]["actions"][j]["parameter"][k]:
+                                                    ref_id = item["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                                    old_aux_list = policy_list_id_old[ref_id]
+                                                    new_aux_list = policy_list_id_new[old_aux_list]
+                                                    item["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
+                                        else:
+                                            if "ref" in item["sequences"][i]["actions"][j]["parameter"]:
+                                                ref_id = item["sequences"][i]["actions"][j]["parameter"]["ref"]
                                                 old_aux_list = policy_list_id_old[ref_id]
                                                 new_aux_list = policy_list_id_new[old_aux_list]
-                                                item["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
-
-
-            if definition == "/acl":
+                                                item["sequences"][i]["actions"][j]["parameter"]["ref"] = new_aux_list
+            elif definition == "/acl":
                 #" Update ACL Id "
                 if "sequences" in item:
                     for i in range(0, len(item["sequences"])):
@@ -906,12 +942,10 @@ def import_policy_definitions(file_path, all_list_ids):
                                         old_aux_list = policy_list_id_old[ref_id]
                                         new_aux_list = policy_list_id_new[old_aux_list]
                                         item["sequences"][i]["actions"][j]["parameter"]["ref"] = new_aux_list
+            elif definition == "/zonebasedfw":
+                #print("ATTENTION: DEFINITION SKIPPED - {0}".format(item))
+                #continue
 
-
-            if definition == "/zonebasedfw":
-                print("ATTENTION: DEFINTION SKIPPED - {0}".format(item))
-                continue
-                '''
                 if "definition" in item:
                     if "sequences" in item["definition"]:
                         for i in range(0, len(item["definition"]["sequences"])):
@@ -926,15 +960,33 @@ def import_policy_definitions(file_path, all_list_ids):
                             if "actions" in item["definition"]["sequences"][i]:
                                     for j in range (0, len(item["definition"]["sequences"][i]["actions"])):
                                         if "parameter" in item["definition"]["sequences"][i]["actions"][j]:
-                                            for k in range (0, len(item["definition"]["sequences"][i]["actions"][j]["parameter"])):
-                                                if "ref" in item["definition"]["sequences"][i]["actions"][j]["parameter"][k]:
-                                                    ref_id = item["definition"]["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                            if isinstance(item["definition"]["sequences"][i]["actions"][j]["parameter"], list):
+                                                for k in range (0, len(item["definition"]["sequences"][i]["actions"][j]["parameter"])):
+                                                    if "ref" in item["definition"]["sequences"][i]["actions"][j]["parameter"][k]:
+                                                        ref_id = item["definition"]["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                                        old_aux_list = policy_list_id_old[ref_id]
+                                                        new_aux_list = policy_list_id_new[old_aux_list]
+                                                        item["definition"]["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
+                                            else:
+                                                if "ref" in item["definition"]["sequences"][i]["actions"][j]["parameter"]:
+                                                    ref_id = item["definition"]["sequences"][i]["actions"][j]["parameter"]["ref"]
                                                     old_aux_list = policy_list_id_old[ref_id]
                                                     new_aux_list = policy_list_id_new[old_aux_list]
-                                                    item["definition"]["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
-                '''
+                                                    item["definition"]["sequences"][i]["actions"][j]["parameter"]["ref"] = new_aux_list
 
-            if definition == "/qosmap":
+                    if "entries" in item["definition"]:
+                        for i in range(0, len(item["definition"]["entries"])):
+                            if "sourceZone" in item["definition"]["entries"][i]:
+                                aux_list_id = item["definition"]["entries"][i]["sourceZone"]
+                                old_aux_list = policy_list_id_old[aux_list_id]
+                                new_aux_list = policy_list_id_new[old_aux_list]
+                                item["definition"]["entries"][i]["sourceZone"] = new_aux_list
+                            if "destinationZone" in item["definition"]["entries"][i]:
+                                aux_list_id = item["definition"]["entries"][i]["destinationZone"]
+                                old_aux_list = policy_list_id_old[aux_list_id]
+                                new_aux_list = policy_list_id_new[old_aux_list]
+                                item["definition"]["entries"][i]["destinationZone"] = new_aux_list
+            elif definition == "/qosmap":
                 if "definition" in item:
                     if "qosSchedulers" in item["definition"]:
                         for i in range(0, len(item["definition"]["qosSchedulers"])):
@@ -944,10 +996,9 @@ def import_policy_definitions(file_path, all_list_ids):
                                     old_aux_list = policy_list_id_old[ref_id]
                                     new_aux_list = policy_list_id_new[old_aux_list]
                                     item["definition"]["qosSchedulers"][i]["classMapRef"] = new_aux_list
-
-            if definition == "/aclv6":
-                pass
-            if definition == "/data":
+            elif definition == "/aclv6":
+                print("ATTENTION: DEFINITION ID UPDATE NOT IMPLEMENTED - {0} - {1}".format(definition, item))
+            elif definition == "/data":
                 #" Update Data Id "
                 if "sequences" in item:
                     for i in range(0, len(item["sequences"])):
@@ -962,18 +1013,29 @@ def import_policy_definitions(file_path, all_list_ids):
                         if "actions" in item["sequences"][i]:
                             for j in range (0, len(item["sequences"][i]["actions"])):
                                 if "parameter" in item["sequences"][i]["actions"][j]:
-                                    for k in range (0, len(item["sequences"][i]["actions"][j]["parameter"])):
-                                        if "ref" in item["sequences"][i]["actions"][j]["parameter"][k]:
-                                            ref_id = item["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                    if isinstance(item["sequences"][i]["actions"][j]["parameter"], list):
+                                        for k in range (0, len(item["sequences"][i]["actions"][j]["parameter"])):
+                                            if "ref" in item["sequences"][i]["actions"][j]["parameter"][k]:
+                                                ref_id = item["sequences"][i]["actions"][j]["parameter"][k]["ref"]
+                                                old_aux_list = policy_list_id_old[ref_id]
+                                                new_aux_list = policy_list_id_new[old_aux_list]
+                                                item["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
+                                            if "value" in item["sequences"][i]["actions"][j]["parameter"][k]:
+                                                if "tlocList" in item["sequences"][i]["actions"][j]["parameter"][k]["value"]:
+                                                    if "ref" in item["sequences"][i]["actions"][j]["parameter"][k]["value"]["tlocList"]:
+                                                        ref_id = item["sequences"][i]["actions"][j]["parameter"][k]["value"]["tlocList"]["ref"]
+                                                        old_aux_list = policy_list_id_old[ref_id]
+                                                        new_aux_list = policy_list_id_new[old_aux_list]
+                                                        item["sequences"][i]["actions"][j]["parameter"][k]["value"]["tlocList"]["ref"] = new_aux_list
+                                    else:
+                                        if "ref" in item["sequences"][i]["actions"][j]["parameter"]:
+                                            ref_id = item["sequences"][i]["actions"][j]["parameter"]["ref"]
                                             old_aux_list = policy_list_id_old[ref_id]
                                             new_aux_list = policy_list_id_new[old_aux_list]
-                                            item["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
-
-
-            if definition == "/rewriterule":
-                pass
-
-            if definition == "/vedgeroute":
+                                            item["sequences"][i]["actions"][j]["parameter"]["ref"] = new_aux_list
+            elif definition == "/rewriterule":
+                print("ATTENTION: DEFINITION ID UPDATE NOT IMPLEMENTED - {0} - {1}".format(definition, item))
+            elif definition == "/vedgeroute":
                 #" Update List Id "
                 for i in range(0, len(item["sequences"])):
                     for j in range (0, len(item["sequences"][i]["match"]["entries"])):
@@ -983,29 +1045,46 @@ def import_policy_definitions(file_path, all_list_ids):
                             old_aux_list = policy_list_id_old[ref_id]
                             new_aux_list = policy_list_id_new[old_aux_list]
                             item["sequences"][i]["match"]["entries"][j]["ref"] = new_aux_list
-                            #pprint(item["sequences"][i]["match"]["entries"][j]["ref"])
-
-            if definition == "/hubandspoke":
-                vpn_list_id = item["definition"]['vpnList']
-                old_aux_list = policy_list_id_old[vpn_list_id]
-                new_aux_list = policy_list_id_new[old_aux_list]
-                item["definition"]["vpnList"] = new_aux_list
-
-                for i in range(0, len(item["definition"]["subDefinitions"])):
-                    #pprint(item["definition"]["subDefinitions"][i]["spokes"])
-                    for j in range(0, len(item["definition"]["subDefinitions"][i]["spokes"])):
-                        site_list_id = item["definition"]["subDefinitions"][i]["spokes"][j]["siteList"]
-                        #pprint(site_list_id)
-                        old_aux_list = policy_list_id_old[site_list_id]
+            elif definition == "/hubandspoke":
+                #" Update Hub and Spoke Id - Standard"
+                if "definition" in item:
+                    if "vpnList" in item["definition"]:
+                        vpn_list_id = item["definition"]['vpnList']
+                        old_aux_list = policy_list_id_old[vpn_list_id]
                         new_aux_list = policy_list_id_new[old_aux_list]
-                        item["definition"]["subDefinitions"][i]["spokes"][j]["siteList"] = new_aux_list
-                        for k in range(0, len(item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"])):
-                            site_list_id = item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["siteList"]
-                            old_aux_list = policy_list_id_old[site_list_id]
-                            new_aux_list = policy_list_id_new[old_aux_list]
-                            item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["siteList"] = new_aux_list
+                        item["definition"]["vpnList"] = new_aux_list
 
-            if definition == "/vpnmembershipgroup":
+                    if "subDefinitions" in item["definition"]:
+                        for i in range(0, len(item["definition"]["subDefinitions"])):
+                            if "tlocList" in item["definition"]["subDefinitions"][i]:
+                                aux_list_id = item["definition"]["subDefinitions"][i]["tlocList"]
+                                old_aux_list = policy_list_id_old[aux_list_id]
+                                new_aux_list = policy_list_id_new[old_aux_list]
+                                item["definition"]["subDefinitions"][i]["tlocList"] = new_aux_list
+
+                            if "spokes" in item["definition"]["subDefinitions"][i]:
+                                for j in range(0, len(item["definition"]["subDefinitions"][i]["spokes"])):
+                                    if "siteList" in item["definition"]["subDefinitions"][i]["spokes"][j]:
+                                        site_list_id = item["definition"]["subDefinitions"][i]["spokes"][j]["siteList"]
+                                        old_aux_list = policy_list_id_old[site_list_id]
+                                        new_aux_list = policy_list_id_new[old_aux_list]
+                                        item["definition"]["subDefinitions"][i]["spokes"][j]["siteList"] = new_aux_list
+
+                                    if "hubs" in item["definition"]["subDefinitions"][i]["spokes"][j]:
+                                        for k in range(0, len(item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"])):
+                                            if "siteList" in item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]:
+                                                site_list_id = item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["siteList"]
+                                                old_aux_list = policy_list_id_old[site_list_id]
+                                                new_aux_list = policy_list_id_new[old_aux_list]
+                                                item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["siteList"] = new_aux_list
+
+                                            if "prefixLists" in item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]:
+                                                for l in range(0, len(item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["prefixLists"])):
+                                                    aux_list_id = item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["prefixLists"][l]
+                                                    old_aux_list = policy_list_id_old[aux_list_id]
+                                                    new_aux_list = policy_list_id_new[old_aux_list]
+                                                    item["definition"]["subDefinitions"][i]["spokes"][j]["hubs"][k]["prefixLists"][l] = new_aux_list
+            elif definition == "/vpnmembershipgroup":
                 for i in range(0, len(item["definition"]["sites"])):
                     site_list_id = item["definition"]["sites"][i]["siteList"]
                     old_aux_list = policy_list_id_old[site_list_id]
@@ -1016,16 +1095,14 @@ def import_policy_definitions(file_path, all_list_ids):
                         old_aux_list = policy_list_id_old[vpn_list_id]
                         new_aux_list = policy_list_id_new[old_aux_list]
                         item["definition"]["sites"][i]["vpnList"][j] = new_aux_list
-
-            if definition == "/approute":
+            elif definition == "/approute":
                 #" Update ACL Id "
                 if "defaultAction" in item:
                     if "ref" in item["defaultAction"]:
-                        defaultAction_id = item["defaultAction"]["ref"]
-                        old_aux_list = policy_list_id_old[defaultAction_id]
+                        ref_id = item["defaultAction"]["ref"]
+                        old_aux_list = policy_list_id_old[ref_id]
                         new_aux_list = policy_list_id_new[old_aux_list]
                         item["defaultAction"]["ref"] = new_aux_list
-
 
                 if "sequences" in item:
                     for i in range(0, len(item["sequences"])):
@@ -1036,7 +1113,6 @@ def import_policy_definitions(file_path, all_list_ids):
                                     old_aux_list = policy_list_id_old[ref_id]
                                     new_aux_list = policy_list_id_new[old_aux_list]
                                     item["sequences"][i]["match"]["entries"][j]["ref"] = new_aux_list
-
 
                         if "actions" in item["sequences"][i]:
                             for j in range (0, len(item["sequences"][i]["actions"])):
@@ -1058,8 +1134,7 @@ def import_policy_definitions(file_path, all_list_ids):
                                 new_aux_list = policy_list_id_new[old_aux_list]
                                 item["sequences"][i]["actions"][j]["parameter"][k]["ref"] = new_aux_list
                 '''
-
-            if definition == "/mesh":
+            elif definition == "/mesh":
                 vpn_list_id = item["definition"]['vpnList']
                 old_aux_list = policy_list_id_old[vpn_list_id]
                 new_aux_list = policy_list_id_new[old_aux_list]
@@ -1071,26 +1146,35 @@ def import_policy_definitions(file_path, all_list_ids):
                             old_aux_list = policy_list_id_old[site_list_id]
                             new_aux_list = policy_list_id_new[old_aux_list]
                             item["definition"]["regions"][i]["siteLists"][j] = new_aux_list
+            else:
+                print("ATTENTION: DEFINITION NOT IMPLEMENTED - {0} - {1}".format(definition, item))
+                continue
 
+            print("Policy definition: Importing {0} {1} - ".format(definition, item["name"]), end="")
             response = sdwanp.post_request(mount_point, item)
-            print("Policy definition {0} - {1}".format(item["name"], response))
+            print("Done, {0}".format(response))
     print("")
 
 
     definition_mount_points =   [
-                                "/cflowd",
-                                "/control",
-                                "/vedgeroute",
-                                "/hubandspoke",
-                                "/acl",
-                                "/vpnmembershipgroup",
-                                "/approute",
-                                "/zonebasedfw",
-                                "/qosmap",
-                                "/aclv6",
-                                "/mesh",
-                                "/data",
-                                "/rewriterule"
+        "/cflowd",
+        "/dnssecurity",
+        "/advancedMalwareProtection",
+        "/control",
+        "/intrusionprevention",
+        "/vedgeroute",
+        "/hubandspoke",
+        "/acl",
+        "/vpnmembershipgroup",
+        "/approute",
+        "/approute",
+        "/zonebasedfw",
+        "/urlfiltering",
+        "/qosmap",
+        "/aclv6",
+        "/mesh",
+        "/data",
+        "/rewriterule"
                                 ]
 
 
@@ -1132,12 +1216,14 @@ def import_vedge_policies(file_path, all_list_ids, all_definition_ids):
                     old_aux_list = policy_definition_id_old[def_id]
                     new_aux_list = policy_definition_id_new[old_aux_list]
                     item["policyDefinition"]["assembly"][i]["definitionId"] = new_aux_list
+                print("vEdge Policy: Importing {0} - ".format(item["policyName"]), end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("vEdge Policy: {0} - {1}".format(item["policyName"], response))
+                print("Done, {0}".format(response))
             elif item["policyType"] == "cli":
                 mount_point = "template/policy/vedge/"
+                print("vEdge Policy: Importing {0} - ".format(item["policyName"]), end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("vEdge Policy: {0} - {1}".format(item["policyName"], response))
+                print("Done, {0}".format(response))
             else:
                 print("vEdge Policy: {0} is not a policy, acutal policyType is {1}".format(item["policyName"], item["policyType"]))
     print("")
@@ -1195,12 +1281,14 @@ def import_vsmart_policies(file_path, all_list_ids, all_definition_ids):
                                     old_aux_list = policy_list_id_old[vpn_list]
                                     new_aux_list = policy_list_id_new[old_aux_list]
                                     item["policyDefinition"]["assembly"][i]["entries"][j]["vpnLists"][k] = new_aux_list
+                print("vSmart Policy: Importing {0}  -  ".format(item["policyName"]),  end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("vSmart Policy: {0} - {1}".format(item["policyName"], response))
+                print("Done, {0}".format(response))
             elif item["policyType"] == "cli":
                 mount_point = "template/policy/vsmart/"
+                print("vSmart Policy: Importing {0} - ".format(item["policyName"]), end="")
                 response = sdwanp.post_request(mount_point, item)
-                print("vSmart Policy: {0} - {1}".format(item["policyName"], response))
+                print("Done, {0}".format(response))
             else:
                 print("vSmart Policy: {0} is not a policy, acutal policyType is {1}".format(item["policyName"], item["policyType"]))
     print("")
@@ -1305,7 +1393,6 @@ def clean_templates():
         if (ask.lower() != "yes"):
             sys.exit("Action stopped - clean templates")
 
-    # TO DO DETACH
     delete_generic_item("device_template")
     delete_generic_item("feature_template")
 
@@ -1501,7 +1588,7 @@ def update_password():
     confirm_pwd = input("  Confirm vManage Password: ")
 
     if new_pwd != confirm_pwd:
-        raise CiscoException("Password do not match! Please try again")
+        raise CiscoException("Passwords do not match! Please try again")
     else:
         vpassword = str(new_pwd)
         mount_point = "admin/user/password/{}".format(vusername)
@@ -1510,27 +1597,6 @@ def update_password():
                 }
         response = sdwanp.put_request(mount_point, item)
         print("Password updated for user {}.".format(vusername))
-
-def delete_users():
-    """Delete users.
-
-        Example command:
-
-            ./sd-wan-exim.py delete_users
-
-    """
-
-    mount_point = "admin/user"
-    response = json.loads(sdwanp.get_request(mount_point))
-    device_data = response['data']
-    user_name_list = [device["userName"] for device in device_data if device["userName"] != "proctor"]
-
-    print(user_name_list)
-
-    for user_name in user_name_list:
-        new_mount_point = "admin/user/" + str(user_name)
-        response = sdwanp.delete_request(new_mount_point)
-        print("Deleted user:{} - {}".format(user_name, response))
 
 def add_user():
     """Create user.
@@ -1549,7 +1615,7 @@ def add_user():
     confirm_pwd = input("  Confirm vManage Password: ")
 
     if new_pwd != confirm_pwd:
-        raise CiscoException("Password do not match! Please try again")
+        raise CiscoException("Passwords do not match! Please try again")
     else:
         vpassword = str(new_pwd)
         mount_point = "admin/user"
@@ -1639,9 +1705,6 @@ if __name__ == "__main__":
     elif SDWAN_ACTION == "password":
         action_print("password                  Update user password.")
         update_password()
-    elif SDWAN_ACTION == "delete_users":
-        action_print("delete_users              Deleting users.")
-        delete_users()
     elif SDWAN_ACTION == "add_user":
         action_print("add_user                  Add user.")
         add_user()
@@ -1661,9 +1724,5 @@ if __name__ == "__main__":
     elif SDWAN_ACTION == "deactivate_policies":
         action_print("deactivate_policies       Deactivate policies.")
         deactivate_policies()
-
-    elif SDWAN_ACTION == "attach_vsmart":
-        action_print("attach_vsmart             Attach vSmart.")
-        attach_vsmart()
     else:
         print(__doc__)
