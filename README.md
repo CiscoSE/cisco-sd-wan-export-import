@@ -24,16 +24,16 @@ See Installation and Usage for further instructions.
 Summary of the features/capabilities/actions:
   - **export**             Export entire configuration.
   - **configure**            Import entire configuration.
-      - **For Templates and Polices dependencies to be preserved use this option (configure)**
+      - *For Templates and Polices dependencies to be preserved use this option (configure)*
   - **configure_policies**   Import policies, definitions and lists.
   - **configure_templates**  Import feature templates and device templates.
-      - **Templates will be imported but dependencies to policies will not be imported**
+      - *Templates will be imported but dependencies to policies will not be imported*
   - **clean**                Delete template(all) and policy(all) configuration.
-      - **For an accurate deploy of a configuration a clean up is required**
+      - *For an accurate deploy of a configuration a clean up is required, in case of items named the same*
   - **clean_devices**        Delete certificates and system devices.
   - **clean_policies**       Delete (only) policies, definitions and lists.
   - **clean_templates**      Delete (only) device and feature templates.
-      - **Devices should be manually detached before cleanup**
+      - *Devices should be manually detached before cleanup*
   - **password**                  Update user password
   - **add_user**                  Add user
   - **invalidate_certificates**   Invalidate device certificates
