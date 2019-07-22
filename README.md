@@ -15,7 +15,7 @@ Cisco SD-WAN. A simple example of the plus value is the time saved migrating tem
 
 These instructions will get you a copy of the project up and running on your local machine.
 
-See Install and Setup for further instructions.
+See Installation and Usage for further instructions.
 
 
 
@@ -52,15 +52,7 @@ This is Cisco Sample Code!
 
 - Cisco SD-WAN (Viptela)
   - Example: https://www.cisco.com/c/en/us/solutions/enterprise-networks/sd-wan/index.html
-
-**Third-Party Products & Services:**
-
-- None
-
-**Tools & Frameworks:**
-
-- None
-
+  - API Documentation: https://sdwan-docs.cisco.com/Product_Documentation/Command_Reference/vManage_REST_APIs
 
 
 ## Requirements
@@ -83,7 +75,7 @@ git clone https://github.com/CiscoSE/cisco-sd-wan-export-import.git
 cd cisco-sd-wan-export-import
 ```
 
-2. Setup Python Virtual Environment (requires Python 3)
+2. Setup Python Virtual Environment (requires Python 3 and Requests)
 
 ```
 python3 -m venv venv
@@ -242,6 +234,7 @@ python sd-wan-exim.py <vManage> <username> <password> configure
 
 - [x] Add option to specify archive name as parameter
 - [x] Add option to detach devices before cleanup
+- [ ] Add support for Python 2
 - [ ] Extend partial policy import capabilities
 
 
