@@ -42,41 +42,6 @@ Summary of the features/capabilities/actions:
   - **detach_devices**            Detach device templates
   - **deactivate_policies**       Deactivate policies
 
----
-
-Normal Workflow for Templates Only: export -> clean_templates -> configure_templates
-
-NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
-```
-python sd-wan-exim.py <vManage> <username> <password> export
-python sd-wan-exim.py <vManage> <username> <password> clean_templates
-python sd-wan-exim.py <vManage> <username> <password> configure_templates
-```
-
-Normal Workflow for Policies Only: export -> clean_policies -> configure_policies
-
-NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
-```
-python sd-wan-exim.py <vManage> <username> <password> export
-python sd-wan-exim.py <vManage> <username> <password> clean_policies
-python sd-wan-exim.py <vManage> <username> <password> configure_policies
-```
-
-Normal Workflow for Templates with Policies: export -> clean -> configure
-
-NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
-```
-python sd-wan-exim.py <vManage> <username> <password> export
-python sd-wan-exim.py <vManage> <username> <password> clean
-python sd-wan-exim.py <vManage> <username> <password> configure
-```
-
----
-
-**NOTE:** The configuration archive will be exported to the same folder where the script is.
-
-**NOTE:** When importing/configuring please have the configuration archive named config_archive.tar.gz(or the one used as parameter) in the same folder
-
 
 
 ## Technologies & Frameworks Used
@@ -236,7 +201,42 @@ Specific archive import multi-tenant example how to use the Cisco SD-WAN EXIM (E
 python sd-wan-exim.py myvmanage.cisco.com myusername mypassword configure mysdwanarchive.tar.gz -tenant mytenantname
 ```
 
+---
 
+Normal Workflow for Templates Only: export -> clean_templates -> configure_templates
+
+NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
+```
+python sd-wan-exim.py <vManage> <username> <password> export
+python sd-wan-exim.py <vManage> <username> <password> clean_templates
+python sd-wan-exim.py <vManage> <username> <password> configure_templates
+```
+
+Normal Workflow for Policies Only: export -> clean_policies -> configure_policies
+
+NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
+```
+python sd-wan-exim.py <vManage> <username> <password> export
+python sd-wan-exim.py <vManage> <username> <password> clean_policies
+python sd-wan-exim.py <vManage> <username> <password> configure_policies
+```
+
+Normal Workflow for Templates with Policies: export -> clean -> configure
+
+NOTE: The clean action can be skipped if you want to keep existing configurations and it's not overlapping.  
+```
+python sd-wan-exim.py <vManage> <username> <password> export
+python sd-wan-exim.py <vManage> <username> <password> clean
+python sd-wan-exim.py <vManage> <username> <password> configure
+```
+
+---
+
+**NOTE:** The configuration archive will be exported to the same folder where the script is.
+
+**NOTE:** When importing/configuring please have the configuration archive named config_archive.tar.gz(or the one used as parameter) in the same folder
+
+**NOTE:** The configure option will not overwrite items(templates/policies) that have the same name, they will be skipped and the process will continue.
 
 ## ToDo's:
 
