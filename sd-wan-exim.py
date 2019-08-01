@@ -877,10 +877,12 @@ def import_policy_lists(file_path):
 
     policy_list_id_new = OrderedDict()
     for mount_point in list_mount_points:
-        response = json.loads(sdwanp.get_request('template/policy/list' + str(mount_point)))
-        policy_list_data = response['data']
-        for policy_list_temp in policy_list_data:
-            policy_list_id_new[str(mount_point) + "/" + str(policy_list_temp['name'])] = policy_list_temp['listId']
+        response_json = sdwanp.get_request('template/policy/list' + str(mount_point))
+        if response_json:
+            response = json.loads(response_json)
+            policy_list_data = response['data']
+            for policy_list_temp in policy_list_data:
+                policy_list_id_new[str(mount_point) + "/" + str(policy_list_temp['name'])] = policy_list_temp['listId']
     #pprint(policy_list_id_new)
 
     return (policy_list_id_old, policy_list_id_new)
@@ -1198,10 +1200,12 @@ def import_policy_definitions(file_path, all_list_ids):
 
     policy_definition_id_new = OrderedDict()
     for mount_point in definition_mount_points:
-        response = json.loads(sdwanp.get_request('template/policy/definition' + str(mount_point)))
-        policy_definition_data = response['data']
-        for policy_definition_temp in policy_definition_data:
-            policy_definition_id_new[str(mount_point) + "/" + str(policy_definition_temp['name'])] = policy_definition_temp['definitionId']
+        response_json = sdwanp.get_request('template/policy/definition' + str(mount_point))
+        if response_json:
+            response = json.loads(response_json)
+            policy_definition_data = response['data']
+            for policy_definition_temp in policy_definition_data:
+                policy_definition_id_new[str(mount_point) + "/" + str(policy_definition_temp['name'])] = policy_definition_temp['definitionId']
     #pprint(policy_list_id_new)
     return (policy_definition_id_old, policy_definition_id_new)
 
