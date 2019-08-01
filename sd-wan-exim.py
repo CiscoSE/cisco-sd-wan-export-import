@@ -340,20 +340,25 @@ def export_policy_definitions(file_path):
         "/rewriterule"
                                 ]
     for mount_point in definition_mount_points:
-        policy_definition_ids_list[mount_point] = get_policy_definition_ids(mount_point)
+        try:
+            print("Exporting done for {0}".format(mount_point))
+            policy_definition_ids_list[mount_point] = get_policy_definition_ids(mount_point)
+        except:
+            print("Exporting skipped for {0}, not present".format(mount_point))
     #pprint(policy_definition_ids_list)
 
     policy_definitions = OrderedDict({"configuration": OrderedDict()})
 
     for mount_point in definition_mount_points:
         device_data_list = []
-        for id in policy_definition_ids_list[mount_point]:
-            print("Exporting ID: {}".format(id))
-            new_mount_point = "template/policy/definition" + str(mount_point) + "/" + str(id)
-            device_data = json.loads(sdwanp.get_request(new_mount_point))
-            if device_data:
-                device_data_list.append(device_data)
-        policy_definitions["configuration"][mount_point] = device_data_list
+        if mount_point in policy_definition_ids_list:
+            for id in policy_definition_ids_list[mount_point]:
+                print("Exporting ID: {}".format(id))
+                new_mount_point = "template/policy/definition" + str(mount_point) + "/" + str(id)
+                device_data = json.loads(sdwanp.get_request(new_mount_point))
+                if device_data:
+                    device_data_list.append(device_data)
+            policy_definitions["configuration"][mount_point] = device_data_list
 
     with open(policy_definition_json_file, 'w') as f:
         json.dump(policy_definitions, f)
@@ -398,20 +403,25 @@ def export_policy_lists(file_path):
       "/vpn"
                             ]
     for mount_point in list_mount_points:
-        policy_list_ids_list[mount_point] = get_policy_list_ids(mount_point)
+        try:
+            print("Exporting done for {0}".format(mount_point))
+            policy_list_ids_list[mount_point] = get_policy_list_ids(mount_point)
+        except:
+            print("Exporting skipped for {0}, not present".format(mount_point))
     #pprint(policy_definition_ids_list)
 
     policy_lists = OrderedDict({"configuration": OrderedDict()})
 
     for mount_point in list_mount_points:
         device_data_list = []
-        for id in policy_list_ids_list[mount_point]:
-            print("Exporting ID: {}".format(id))
-            new_mount_point = "template/policy/list" + str(mount_point) + "/" + str(id)
-            device_data = json.loads(sdwanp.get_request(new_mount_point))
-            if device_data:
-                device_data_list.append(device_data)
-        policy_lists["configuration"][mount_point] = device_data_list
+        if mount_point in policy_list_ids_list:
+            for id in policy_list_ids_list[mount_point]:
+                print("Exporting ID: {}".format(id))
+                new_mount_point = "template/policy/list" + str(mount_point) + "/" + str(id)
+                device_data = json.loads(sdwanp.get_request(new_mount_point))
+                if device_data:
+                    device_data_list.append(device_data)
+            policy_lists["configuration"][mount_point] = device_data_list
 
     with open(policy_list_json_file, 'w') as f:
         json.dump(policy_lists, f)
