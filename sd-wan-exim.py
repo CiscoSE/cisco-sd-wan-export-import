@@ -65,7 +65,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 __author__ = "Octavian Preda"
 __email__ = "opreda@cisco.com"
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 __copyright__ = "Copyright (c) 2019 Cisco and/or its affiliates."
 __license__ = "Cisco Sample Code License, Version 1.1"
 __status__ = "Development"
@@ -92,44 +92,48 @@ class CiscoException(Exception):
 class rest_api_lib:
     def __init__(self, vmanage_ip, username, password):
         self.vmanage_ip = vmanage_ip
-        self.session = {}
+        self.headers = {}
+        self.session = requests.session()
         self.login(self.vmanage_ip, username, password)
 
     def login(self, vmanage_ip, username, password):
         """Login to vmanage"""
-        base_url_str = 'https://%s/'%vmanage_ip
+        base_url_str = 'https://{0}/'.format(vmanage_ip)
+        login_str = 'j_security_check'
+        token_str = 'dataservice/client/token'
 
-        login_action = '/j_security_check'
+        #Url for posting login data
+        login_url = base_url_str + login_str
+        token_url = base_url_str + token_str
 
         #Format data for loginForm
         login_data = {'j_username' : username, 'j_password' : password}
 
-        #Url for posting login data
-        login_url = base_url_str + login_action
-        url = base_url_str + login_url
-
-        sess = requests.session()
         #If the vmanage has a certificate signed by a trusted authority change verify to True
-        login_response = sess.post(url=login_url, data=login_data, verify=False)
+        login_response = self.session.post(url=login_url, data=login_data, verify=False)
+        if b'<html>' in login_response.content or login_response.status_code != 200:
+            raise CiscoException('Login Failed: {0}'.format(login_response.status_code))
 
-
-        if b'<html>' in login_response.content:
-            print ("Login Failed")
-            sys.exit(0)
-
-        self.session[vmanage_ip] = sess
+        #If the vmanage has a certificate signed by a trusted authority change verify to True
+        token_response = self.session.get(url=token_url, verify=False)
+        if token_response.status_code == 200:
+            self.headers['X-XSRF-TOKEN'] = token_response.content
+        elif token_response.status_code == 404:
+            pass
+        else:
+            raise CiscoException('Failed getting X-XSRF-TOKEN: {0}'.format(token_response.status_code))
 
     def get_request(self, mount_point):
         """GET request"""
         url = "https://%s/dataservice/%s"%(self.vmanage_ip, mount_point)
-        #print(url)
-        if HEADER_VSESSION:
-            headers={'VSessionId': str(HEADER_VSESSION)}
-            response = self.session[self.vmanage_ip].get(url, headers=headers, verify=False)
-        else:
-            response = self.session[self.vmanage_ip].get(url, verify=False)
 
+        if HEADER_VSESSION:
+            self.headers['VSessionId'] = str(HEADER_VSESSION)
+
+        response = self.session.get(url, headers=self.headers, verify=False)
+        response.raise_for_status()
         data = response.content
+
         return data
 
     def post_request(self, mount_point, payload, headers={'Content-Type': 'application/json'}):
@@ -149,7 +153,7 @@ class rest_api_lib:
         if HEADER_VSESSION:
             headers['VSessionId'] = str(HEADER_VSESSION)
 
-        response = self.session[self.vmanage_ip].post(url=url, data=payload, headers=headers, verify=False)
+        response = self.session.post(url=url, data=payload, headers=headers, verify=False)
         if response.status_code != 200:
             if (response.status_code == 400):
                 response_details = str(response.json()['error']['details'])
@@ -183,7 +187,7 @@ class rest_api_lib:
         if HEADER_VSESSION:
             headers['VSessionId'] = str(HEADER_VSESSION)
 
-        response = self.session[self.vmanage_ip].put(url=url, data=payload, headers=headers, verify=False)
+        response = self.session.put(url=url, data=payload, headers=headers, verify=False)
         if response.status_code != 200:
                 print(response.json()['error']['details'])
                 raise CiscoException("Fail - Put")
@@ -202,9 +206,9 @@ class rest_api_lib:
 
         if HEADER_VSESSION:
             headers={'VSessionId': str(HEADER_VSESSION)}
-            response = self.session[self.vmanage_ip].delete(url=url, headers=headers, verify=False)
+            response = self.session.delete(url=url, headers=headers, verify=False)
         else:
-            response = self.session[self.vmanage_ip].delete(url=url, verify=False)
+            response = self.session.delete(url=url, verify=False)
 
         data = response.content
 
