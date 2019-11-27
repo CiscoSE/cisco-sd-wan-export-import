@@ -147,6 +147,7 @@ class rest_api_lib:
         dup_vsmart_msg = "vSmart policy with name"
         dup_token = "Umbrella Token entry already exists"
         version_msg = "Failed to create definition"
+        unknown_msg = "Unknown error"
 
         payload = json.dumps(payload)
 
@@ -163,7 +164,8 @@ class rest_api_lib:
                     (response_details.startswith(dup_vedge_msg)) or \
                     (response_details.startswith(dup_vsmart_msg)) or \
                     (response_details.startswith(dup_token)) or \
-                    (response_details.startswith(version_msg)):
+                    (response_details.startswith(version_msg)) or \
+                    (response_details.startswith(unknown_msg)):
                     return response_details
                 else:
                     try:
