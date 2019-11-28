@@ -74,7 +74,6 @@ __status__ = "Development"
 """ GLOBAL VARIABLES """
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 CONFIG_ARCH = "config_archive.tar.gz"
-HEADER_VSESSION = ""
 ITEM_DIC =  {
                 "device_template" : ("template/device", "templateId"),
                 "feature_template" : ("template/feature", "templateId"),
@@ -127,9 +126,6 @@ class rest_api_lib:
         """GET request"""
         url = "https://%s/dataservice/%s"%(self.vmanage_ip, mount_point)
 
-        if HEADER_VSESSION:
-            self.headers['VSessionId'] = str(HEADER_VSESSION)
-
         response = self.session.get(url, headers=self.headers, verify=False)
         #response.raise_for_status()
         data = response.content
@@ -151,9 +147,6 @@ class rest_api_lib:
 
         payload = json.dumps(payload)
         self.headers['Content-Type'] = 'application/json'
-
-        if HEADER_VSESSION:
-            self.headers['VSessionId'] = str(HEADER_VSESSION)
 
         response = self.session.post(url=url, data=payload, headers=self.headers, verify=False)
         if response.status_code != 200:
@@ -188,9 +181,6 @@ class rest_api_lib:
         payload = json.dumps(payload)
         self.headers['Content-Type'] = 'application/json'
 
-        if HEADER_VSESSION:
-            self.headers['VSessionId'] = str(HEADER_VSESSION)
-
         response = self.session.put(url=url, data=payload, headers=self.headers, verify=False)
         if response.status_code != 200:
                 print(response.json()['error']['details'])
@@ -208,9 +198,6 @@ class rest_api_lib:
         factory_template_msg = "Template is a factory default"
         policy_list_ro_msg = "This policy list is a read only list and it cannot be deleted"
         policy_list_partner = "This policy list is created by a partner and can only be removed when the partner is deleted."
-
-        if HEADER_VSESSION:
-            self.headers['VSessionId'] = str(HEADER_VSESSION)
 
         response = self.session.delete(url=url, headers=self.headers, verify=False)
 
@@ -235,6 +222,25 @@ class rest_api_lib:
             return data
         else:
             return "Successful"
+
+    def use_tenant(self, tenant):
+        print("tenant")
+
+        mount_point = "tenant"
+        response = json.loads(sdwanp.get_request(mount_point))
+        device_data = response["data"]
+        tenant_id = ""
+        for device in device_data:
+            if device["name"] == tenant:
+                tenant_id = device["tenantId"]
+        if not tenant_id:
+            raise CiscoException("Tenant {} not found! Please check tenant name and try again.".format(tenant))
+
+        item = {}
+        mount_point = "tenant/" + str(tenant_id) + "/switch"
+        response = sdwanp.post_request(mount_point, item)
+
+        self.headers["VSessionId"] = response["VSessionId"]
 
 
 def get_ids(generic_item):
@@ -1648,24 +1654,7 @@ def add_user():
         print("User {} created.".format(vusername))
 
 
-def use_tenant(tenant):
-    print("tenant")
 
-    mount_point = "tenant"
-    response = json.loads(sdwanp.get_request(mount_point))
-    device_data = response["data"]
-    tenant_id = ""
-    for device in device_data:
-        if device["name"] == tenant:
-            tenant_id = device["tenantId"]
-    if not tenant_id:
-        raise CiscoException("Tenant {} not found! Please check tenant name and try again.".format(tenant))
-
-    item = {}
-    mount_point = "tenant/" + str(tenant_id) + "/switch"
-    response = sdwanp.post_request(mount_point, item)
-
-    return response["VSessionId"]
 
 
 if __name__ == "__main__":
@@ -1697,7 +1686,7 @@ if __name__ == "__main__":
     sdwanp = rest_api_lib(SDWAN_IP, SDWAN_USERNAME, SDWAN_PASSWORD)
 
     if SDWAN_TENANT:
-        HEADER_VSESSION = use_tenant(SDWAN_TENANT)
+        sdwanp.use_tenant(SDWAN_TENANT)
 
     if SDWAN_ACTION == "clean":
         action_print("clean                     Delete templates and policies configuration.")
