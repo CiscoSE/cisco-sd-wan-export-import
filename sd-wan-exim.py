@@ -207,6 +207,7 @@ class rest_api_lib:
         url = "https://%s/dataservice/%s"%(self.vmanage_ip, mount_point)
         factory_template_msg = "Template is a factory default"
         policy_list_ro_msg = "This policy list is a read only list and it cannot be deleted"
+        policy_list_partner = "This policy list is created by a partner and can only be removed when the partner is deleted."
 
         if HEADER_VSESSION:
             self.headers['VSessionId'] = str(HEADER_VSESSION)
@@ -221,6 +222,8 @@ class rest_api_lib:
                 if (response.json()['error']['details'] == factory_template_msg):
                     return(response.json()['error']['details'])
                 elif(response.json()['error']['details'] == policy_list_ro_msg):
+                    return(response.json()['error']['details'])
+                elif(response.json()['error']['details'] == policy_list_partner):
                     return(response.json()['error']['details'])
                 else:
                     print(response.json()['error']['details'])
