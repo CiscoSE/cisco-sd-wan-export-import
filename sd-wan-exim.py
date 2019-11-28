@@ -136,7 +136,7 @@ class rest_api_lib:
 
         return data
 
-    def post_request(self, mount_point, payload, headers={'Content-Type': 'application/json'}):
+    def post_request(self, mount_point, payload):
         """POST request"""
         url = "https://%s/dataservice/%s"%(self.vmanage_ip, mount_point)
 
@@ -150,11 +150,12 @@ class rest_api_lib:
         unknown_msg = "Unknown error"
 
         payload = json.dumps(payload)
+        self.headers['Content-Type'] = 'application/json'
 
         if HEADER_VSESSION:
-            headers['VSessionId'] = str(HEADER_VSESSION)
+            self.headers['VSessionId'] = str(HEADER_VSESSION)
 
-        response = self.session.post(url=url, data=payload, headers=headers, verify=False)
+        response = self.session.post(url=url, data=payload, headers=self.headers, verify=False)
         if response.status_code != 200:
             if (response.status_code == 400):
                 response_details = str(response.json()['error']['details'])
@@ -180,16 +181,17 @@ class rest_api_lib:
 
         return data
 
-    def put_request(self, mount_point, payload, headers={'Content-Type': 'application/json'}):
+    def put_request(self, mount_point, payload):
         """PUT request"""
         url = "https://%s/dataservice/%s"%(self.vmanage_ip, mount_point)
 
         payload = json.dumps(payload)
+        self.headers['Content-Type'] = 'application/json'
 
         if HEADER_VSESSION:
-            headers['VSessionId'] = str(HEADER_VSESSION)
+            self.headers['VSessionId'] = str(HEADER_VSESSION)
 
-        response = self.session.put(url=url, data=payload, headers=headers, verify=False)
+        response = self.session.put(url=url, data=payload, headers=self.headers, verify=False)
         if response.status_code != 200:
                 print(response.json()['error']['details'])
                 raise CiscoException("Fail - Put")
@@ -207,10 +209,9 @@ class rest_api_lib:
         policy_list_ro_msg = "This policy list is a read only list and it cannot be deleted"
 
         if HEADER_VSESSION:
-            headers={'VSessionId': str(HEADER_VSESSION)}
-            response = self.session.delete(url=url, headers=headers, verify=False)
-        else:
-            response = self.session.delete(url=url, verify=False)
+            self.headers['VSessionId'] = str(HEADER_VSESSION)
+
+        response = self.session.delete(url=url, headers=self.headers, verify=False)
 
         data = response.content
 
