@@ -131,7 +131,7 @@ class rest_api_lib:
             self.headers['VSessionId'] = str(HEADER_VSESSION)
 
         response = self.session.get(url, headers=self.headers, verify=False)
-        response.raise_for_status()
+        #response.raise_for_status()
         data = response.content
 
         return data
