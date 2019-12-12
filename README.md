@@ -4,6 +4,8 @@
 
 ---
 
+[![published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/CiscoSE/cisco-sd-wan-export-import)
+
 ## Why
 
 Cisco SD-WAN powered by Viptela is a cloud-delivered overlay WAN architecture for enterprises. This project provides a Command line tool interface on top of the REST API programmatic interface offered by the SD-WAN controller, vManage. The final desired outcome is a baseline automation framework for
@@ -191,6 +193,17 @@ Specific archive import multi-tenant example how to use the Cisco SD-WAN EXIM (E
 
 ```
 python sd-wan-exim.py myvmanage.cisco.com myusername mypassword configure mysdwanarchive.tar.gz -tenant mytenantname
+```
+
+---
+
+Basic example how to use the Cisco SD-WAN EXIM (Export and Import) with DevNet Sandbox:
+
+```
+python sd-wan-exim.py sandboxsdwan.cisco.com:8443 devnetuser Cisco123! export mysdwanarchive.tar.gz
+```
+```
+python sd-wan-exim.py sandboxsdwan.cisco.com:8443 devnetuser Cisco123! configure mysdwanarchive.tar.gz
 ```
 
 ---
