@@ -243,6 +243,52 @@ python sd-wan-exim.py <vManage> <username> <password> configure
 
 **NOTE:** The configure option will not overwrite items(templates/policies) that have the same name, they will be skipped and the process will continue.
 
+
+## Output
+
+Basic output example for Cisco SD-WAN EXIM (Export and Import) with DevNet Sandbox:
+
+```
+Action:
+export                    Export entire configuration.
+
+device_template
+Exporting ID: 72babaf2-68b6-4176-92d5-fa8de58e19d8
+Successfully exported the device templates from sandboxsdwan.cisco.com:8443
+
+feature_template
+Exporting ID: b4012da9-79e5-49b7-9787-b6421d061fec
+Successfully exported the feature templates from sandboxsdwan.cisco.com:8443
+
+vedge_policy
+Successfully exported the vEdge policies from sandboxsdwan.cisco.com:8443
+
+vsmart_policy
+Successfully exported the vSmart policies from sandboxsdwan.cisco.com:8443
+
+vedge_policy_id
+Successfully exported the vEdge policy IDs from sandboxsdwan.cisco.com:8443
+
+vsmart_policy_id
+Successfully exported the vSmart policy IDs from sandboxsdwan.cisco.com:8443
+
+policy_definition
+Exporting done for /cflowd
+...
+Exporting done for /rewriterule
+Successfully exported the policy definitions from sandboxsdwan.cisco.com:8443
+
+policy_list
+Exporting done for /community
+...
+Exporting done for /vpn
+Exporting ID: e116735d-8e96-41ce-a93b-21d8c7aa9c19
+Successfully exported the policy lists from sandboxsdwan.cisco.com:8443
+
+Successfully exported the configuration from sandboxsdwan.cisco.com:8443
+```
+
+
 ## ToDo's:
 
 - [x] Add option to specify archive name as parameter
