@@ -251,15 +251,23 @@ def get_ids(generic_item):
 
 def get_policy_definition_ids(mount_point):
     new_mount_point = "template/policy/definition" + str(mount_point)
-    response = json.loads(sdwanp.get_request(new_mount_point))
-    device_data = response['data']
-    return [device["definitionId"] for device in device_data]
+    response = sdwanp.get_request(new_mount_point)
+    if response:
+        response = json.loads(response)
+        device_data = response['data']
+        return [device["definitionId"] for device in device_data]
+    else:
+        return []
 
 def get_policy_list_ids(mount_point):
     new_mount_point = "template/policy/list" + str(mount_point)
-    response = json.loads(sdwanp.get_request(new_mount_point))
-    device_data = response['data']
-    return [device["listId"] for device in device_data]
+    response = sdwanp.get_request(new_mount_point)
+    if response:
+        response = json.loads(response)
+        device_data = response['data']
+        return [device["listId"] for device in device_data]
+    else:
+        return []
 
 
 def load_json_from_file(fp):
