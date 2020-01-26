@@ -1062,7 +1062,14 @@ def import_policy_definitions(file_path, all_list_ids):
                                             new_aux_list = policy_list_id_new[old_aux_list]
                                             item["sequences"][i]["actions"][j]["parameter"]["ref"] = new_aux_list
             elif definition == "/rewriterule":
-                print("ATTENTION: DEFINITION ID UPDATE NOT IMPLEMENTED - {0} - {1}".format(definition, item))
+                #" Update Rewriterule Id - Standard"
+                if "definition" in item:
+                    if "rules" in item["definition"]:
+                        for i in range(0, len(item["definition"]["rules"])):
+                            vpn_list_id = item["definition"]["rules"][i]["class"]
+                            old_aux_list = policy_list_id_old[vpn_list_id]
+                            new_aux_list = policy_list_id_new[old_aux_list]
+                            item["definition"]["rules"][i]["class"] = new_aux_list
             elif definition == "/vedgeroute":
                 #" Update List Id "
                 for i in range(0, len(item["sequences"])):
